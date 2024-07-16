@@ -21,6 +21,7 @@
 		"express-rate-limit": "^7.3.0",
 		"jsonwebtoken": "^9.0.2",
 		"mongoose": "^8.4.1",
+		"node-cron": "^3.0.3",
 		"uuid": "^9.0.1"
 	},
 	"devDependencies": {

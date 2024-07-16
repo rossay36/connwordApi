@@ -30,6 +30,8 @@ app.use("/", require("./routes/root"));
 app.use("/auth", require("./routes/authRoutes"));
 app.use("/users", require("./routes/userRoutes"));
 app.use("/posts", require("./routes/postRoutes"));
+app.use("/comments", require("./routes/commentRoutes"));
+app.use("/address", require("./routes/addressRoutes")); // Include updated address routes using PUT
 
 app.all("*", (req, res) => {
 	res.status(404);

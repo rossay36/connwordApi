@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-const userSchema = new mongoose.Schema(
+const userSchema = new Schema(
 	{
 		username: {
 			type: String,
@@ -26,7 +27,10 @@ const userSchema = new mongoose.Schema(
 			type: [String],
 			default: ["User"],
 		},
-
+		active: {
+			type: Boolean,
+			default: true,
+		},
 		password: {
 			type: String,
 			required: true,
@@ -35,79 +39,88 @@ const userSchema = new mongoose.Schema(
 			type: String,
 			default: "",
 		},
+		coverPicture: {
+			type: String,
+			default: "",
+		},
 		bio: {
 			type: String,
 			default: "",
 			maxlength: 160,
 		},
-		followers: [
-			{
-				type: mongoose.Schema.Types.ObjectId,
-				ref: "User",
-			},
-		],
-		following: [
-			{
-				type: mongoose.Schema.Types.ObjectId,
-				ref: "User",
-			},
-		],
-		coverPicture: {
-			type: String,
-			default: "",
-		},
+		friendRequests: [{ type: Schema.Types.ObjectId, ref: "User" }],
+		friendReceiver: [{ type: Schema.Types.ObjectId, ref: "User" }],
+		friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
+		followers: [{ type: Schema.Types.ObjectId, ref: "User" }],
+		following: [{ type: Schema.Types.ObjectId, ref: "User" }],
 		address: {
-			street: {
+			street: { type: String, default: "Add Street", trim: true },
+			city: { type: String, default: "Add City", trim: true },
+			state: { type: String, default: "Add State", trim: true },
+			country: { type: String, default: "Add Country", trim: true },
+			postalCode: { type: String, default: "", trim: true },
+		},
+		isActiveSlide: {
+			type: Boolean,
+			default: false,
+		},
+		relationship: {
+			type: String,
+			default: "Single",
+		},
+		education: {
+			college: {
 				type: String,
-				default: "",
+				default: "Add college",
+				required: true,
 				trim: true,
 			},
-			city: {
+			university: {
 				type: String,
-				default: "",
+				default: "Add university",
+				required: true,
 				trim: true,
 			},
-			state: {
+			degree: {
 				type: String,
-				default: "",
+				default: "Add Degree",
+				required: true,
 				trim: true,
 			},
-			country: {
+			fieldOfStudy: {
 				type: String,
-				default: "",
+				default: "What did you study?",
+				required: true,
 				trim: true,
 			},
-			postalCode: {
-				type: String,
-				default: "",
-				trim: true,
+			startYear: {
+				type: Number,
+				default: 0,
+			},
+			endYear: {
+				type: Number,
+				default: 0,
 			},
 		},
-		education: [
+
+		job: {
+			type: String,
+			default: "What is your Job",
+		},
+		workAt: {
+			type: String,
+			default: "Where do you work",
+		},
+		hobbies: [
 			{
-				school: {
-					type: String,
-					required: true,
-					trim: true,
-				},
-				degree: {
-					type: String,
-					required: true,
-					trim: true,
-				},
-				fieldOfStudy: {
-					type: String,
-					required: true,
-					trim: true,
-				},
-				startYear: {
-					type: Number,
-				},
-				endYear: {
-					type: Number,
-				},
+				type: String,
+				default: "Your Hobbies",
 			},
 		],
+		lastPictureUpdate: {
+			type: Date,
+			default: Date.now,
+		},
 	},
 	{ timestamps: true }
 );
@@ -115,7 +128,7 @@ const userSchema = new mongoose.Schema(
 const postSchema = new mongoose.Schema(
 	{
 		user: {
-			type: mongoose.Schema.Types.ObjectId,
+			type: Schema.Types.ObjectId,
 			ref: "User",
 			required: true,
 		},
@@ -131,15 +144,11 @@ const postSchema = new mongoose.Schema(
 				type: String,
 			},
 		],
-		likes: [
-			{
-				type: mongoose.Schema.Types.ObjectId,
-				ref: "User",
-			},
-		],
+
+		likes: [{ type: Schema.Types.ObjectId, ref: "User" }],
 		comments: [
 			{
-				type: mongoose.Schema.Types.ObjectId,
+				type: Schema.Types.ObjectId,
 				ref: "Comment",
 			},
 		],
@@ -147,22 +156,36 @@ const postSchema = new mongoose.Schema(
 	{ timestamps: true }
 );
 
-const commentSchema = new mongoose.Schema(
+const commentSchema = new Schema(
 	{
 		post: {
-			type: mongoose.Schema.Types.ObjectId,
+			type: Schema.Types.ObjectId,
 			ref: "Post",
 			required: true,
 		},
 		user: {
-			type: mongoose.Schema.Types.ObjectId,
+			type: Schema.Types.ObjectId,
 			ref: "User",
 			required: true,
 		},
-		text: {
+		desc: {
 			type: String,
 			required: true,
 		},
+		commentImage: [
+			{
+				type: String,
+			},
+		],
+		// Nested comments
+		comments: [
+			{
+				type: Schema.Types.ObjectId,
+				ref: "Comment",
+			},
+		],
+		// Likes on comments
+		likes: [{ type: Schema.Types.ObjectId, ref: "User" }],
 	},
 	{ timestamps: true }
 );

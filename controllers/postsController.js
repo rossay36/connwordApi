@@ -18,38 +18,32 @@ const getAllPosts = async (req, res) => {
 	const postsWithUser = await Promise.all(
 		posts.map(async (post) => {
 			const user = await User.findById(post.user).lean().exec();
-			return { ...post, username: user.username };
+			return {
+				...post,
+				username: user.username,
+				profilePicture: user.profilePicture,
+				coverPicture: user.coverPicture,
+			};
 		})
 	);
 
 	res.json(postsWithUser);
 };
+const createNewPost = async (req, res, next) => {
+	try {
+		const { user, text, image } = req.body;
 
-// @desc Create new post
-// @route POST /posts
-// @access Private
-const createNewPost = async (req, res) => {
-	const { user, title, text, image } = req.body;
-
-	// Confirm data
-	if (!user || !title) {
-		return res.status(400).json({ message: "All fields are required" });
-	}
-
-	if (req.userId === user) {
-		// Create and store the new user
-		const post = await Post.create({ user, title, text, image });
-
-		if (post) {
-			// Created
-			return res.status(201).json({ message: "New post created" });
-		} else {
-			return res.status(400).json({ message: "Invalid post data received" });
+		if (!user || !text) {
+			return res.status(400).json({ message: "All fields are required" });
 		}
-	} else {
-		return res
-			.status(409)
-			.json({ message: "forbided, you can only post on your account" });
+
+		// Save to MongoDB (assuming using Mongoose)
+		const newPost = await Post.create({ user, text, image });
+
+		res.status(201).json({ message: "Post created successfully", newPost });
+	} catch (error) {
+		console.error("Error creating post:", error);
+		next(error); // Pass error to error handling middleware
 	}
 };
 
@@ -57,7 +51,7 @@ const createNewPost = async (req, res) => {
 // @route PATCH /posts
 // @access Private
 const updatePost = async (req, res) => {
-	const { id, user, title, text, image } = req.body;
+	const { id, user, text, image } = req.body;
 
 	// Confirm data
 	if (!id || !user) {
@@ -126,11 +120,75 @@ const deletePost = async (req, res) => {
 
 		await post.deleteOne();
 
-		res.status(200).json(`Post '${post.title}' with ID ${post._id} deleted`);
+		res.status(200).json("Post Deleted");
 	} else {
 		return res
 			.status(409)
 			.json({ message: "forbided, you can only delete your post" });
+	}
+};
+
+// @desc Like a post
+// @route POST /posts/:postId/like
+// @access Private
+const likePost = async (req, res) => {
+	const postId = req.params.postId;
+	const userId = req.userId; // Assuming you have middleware that sets req.userId
+
+	try {
+		const post = await Post.findById(postId);
+
+		if (!post) {
+			return res.status(404).json({ message: "Post not found" });
+		}
+
+		// Check if user has already liked the post
+		if (post.likes.includes(userId)) {
+			return res.status(400).json({ message: "Post already liked" });
+		}
+
+		// Add user's ID to likes array
+		post.likes.push(userId);
+		await post.save();
+
+		res.json(post);
+	} catch (error) {
+		console.error("Error liking post:", error);
+		res.status(500).json({ message: "Server Error" });
+	}
+};
+
+// @desc Unlike a post
+// @route POST /posts/:postId/unlike
+// @access Private
+const unlikePost = async (req, res) => {
+	const postId = req.params.postId;
+	const userId = req.userId; // Assuming you have middleware that sets req.userId
+
+	try {
+		if (!userId) {
+			return res.status(401).json({ message: "Unauthorized" }); // or handle as appropriate
+		}
+
+		const post = await Post.findById(postId);
+
+		if (!post) {
+			return res.status(404).json({ message: "Post not found" });
+		}
+
+		// Check if user has not liked the post
+		if (!post.likes.includes(userId)) {
+			return res.status(400).json({ message: "Post not liked yet" });
+		}
+
+		// Remove user's ID from likes array
+		post.likes = post.likes.filter((id) => id.toString() !== userId);
+		await post.save();
+
+		res.json(post);
+	} catch (error) {
+		console.error("Error unliking post:", error);
+		res.status(500).json({ message: "Server Error" });
 	}
 };
 
@@ -139,4 +197,6 @@ module.exports = {
 	createNewPost,
 	updatePost,
 	deletePost,
+	likePost,
+	unlikePost,
 };
