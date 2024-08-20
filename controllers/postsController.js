@@ -40,6 +40,8 @@ const createNewPost = async (req, res, next) => {
 		// Save to MongoDB (assuming using Mongoose)
 		const newPost = await Post.create({ user, text, image });
 
+		await User.findByIdAndUpdate(user, { $push: { posts: newPost._id } });
+
 		res.status(201).json({ message: "Post created successfully", newPost });
 	} catch (error) {
 		console.error("Error creating post:", error);

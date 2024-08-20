@@ -17,33 +17,36 @@ const getAllComments = async (req, res) => {
 		const commentsWithUser = await Promise.all(
 			comments.map(async (comment) => {
 				try {
+					// Fetch user associated with the comment
 					const user = await User.findById(comment.user).lean().exec();
 					if (!user) {
-						throw new Error("User not found");
+						console.error(`User not found for comment ID ${comment._id}`);
+						return null;
 					}
 
+					// Fetch post associated with the comment
 					const post = await Post.findById(comment.post).lean().exec();
 					if (!post) {
-						throw new Error("Post not found");
+						console.error(`Post not found for comment ID ${comment._id}`);
+						return null;
 					}
 
-					// Ensure the post object has the necessary properties
+					// Prepare the processed comment
 					const processedComment = {
 						...comment,
 						username: user.username,
 						profilePicture: user.profilePicture,
 						coverPicture: user.coverPicture,
-						// Check if post.image exists before assigning
-						image: post.image || "", // Default value if post.image is undefined or null
-						text: post.text || "", // Default value if post.text is undefined or null
-						title: post.title || "", // Default value if post.title is undefined or null
-						likes: post.likes || [], // Default value if post.likes is undefined or null
+						image: post.image || "",
+						text: post.text || "",
+						title: post.title || "",
+						likes: post.likes || [],
 					};
 
 					return processedComment;
 				} catch (error) {
-					console.error("Error processing comment:", error);
-					return null; // Return null for failed comments
+					console.error(`Error processing comment ID ${comment._id}:`, error);
+					return null;
 				}
 			})
 		);

@@ -24,32 +24,6 @@ const verifyTokens = (req, res, next) => {
 	});
 };
 
-const userSpecificMiddleware = (req, res, next) => {
-	if (req.userId !== id) {
-		return res
-			.status(409)
-			.json({ message: "Forbidden, you can only update your account" });
-	}
-	// Additional logic specific to user, admin, and manager
-	// ...
-	next();
-};
-
-const adminManagerMiddleware = (req, res, next) => {
-	// Check if the user is an admin or manager
-	if (req.roles.includes("admin") || req.roles.includes("manager")) {
-		// Additional logic specific to admin and manager
-		// ...
-		next();
-	} else {
-		return res
-			.status(403)
-			.json({ message: "Forbidden, only admin and manager can access" });
-	}
-};
-
 module.exports = {
 	verifyTokens,
-	userSpecificMiddleware,
-	adminManagerMiddleware,
 };

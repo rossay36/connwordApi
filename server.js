@@ -11,10 +11,17 @@ const corsOptions = require("./config/corsOptions");
 const connectDB = require("./config/dbConn");
 const mongoose = require("mongoose");
 const PORT = process.env.PORT || 3500;
+const http = require("http"); // Import http module
+
+// Import the Socket.io initialization function
+const { initializeSocket } = require("./config/socket");
 
 console.log(process.env.NODE_ENV);
 
 connectDB();
+
+const server = http.createServer(app);
+initializeSocket(server);
 
 app.use(logger);
 
@@ -31,7 +38,7 @@ app.use("/auth", require("./routes/authRoutes"));
 app.use("/users", require("./routes/userRoutes"));
 app.use("/posts", require("./routes/postRoutes"));
 app.use("/comments", require("./routes/commentRoutes"));
-app.use("/address", require("./routes/addressRoutes")); // Include updated address routes using PUT
+app.use("/messages", require("./routes/messageRoutes"));
 
 app.all("*", (req, res) => {
 	res.status(404);
@@ -48,7 +55,7 @@ app.use(errorHandler);
 
 mongoose.connection.once("open", () => {
 	console.log("Connected to MongoDB");
-	app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+	server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });
 
 mongoose.connection.on("error", (err) => {

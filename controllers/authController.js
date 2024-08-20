@@ -7,57 +7,63 @@ const jwt = require("jsonwebtoken");
 // @route POST /users
 // @access Private
 const createNewUser = async (req, res) => {
-	const { username, firstname, lastname, email, password } = req.body;
+	const { username, firstname, lastname, email, password, gender } = req.body;
 
-	// Confirm data
-	if (!username || !password || !firstname || !lastname || !email) {
+	// Validate incoming data
+	if (!username || !firstname || !lastname || !email || !password || !gender) {
 		return res.status(400).json({ message: "All fields are required" });
 	}
 
-	// Check for duplicate username
-	const usernameDuplicate = await User.findOne({ username })
-		.collation({ locale: "en", strength: 2 })
-		.lean()
-		.exec();
+	try {
+		console.log("Received user data:", req.body);
+		// Check for duplicate username
+		const existingUsername = await User.findOne({ username }).lean().exec();
+		if (existingUsername) {
+			return res.status(409).json({
+				message: "Username already exists. Please choose a different username.",
+			});
+		}
 
-	if (usernameDuplicate) {
-		return res.status(409).json({
-			message: "conflit Username has been taken, login if you have an account",
+		// Check for duplicate email
+		const existingEmail = await User.findOne({ email }).lean().exec();
+		if (existingEmail) {
+			return res.status(409).json({
+				message:
+					"Email address already registered. Please use a different email.",
+			});
+		}
+
+		// Hash password
+		const hashedPassword = await bcrypt.hash(password, 10); // Using bcrypt for hashing with salt rounds
+
+		// Create new user object
+		const newUser = new User({
+			username,
+			firstname,
+			lastname,
+			email,
+			gender,
+			password: hashedPassword,
 		});
-	}
 
-	// Check for duplicate email
-	const emailDuplicate = await User.findOne({ email })
-		.collation({ locale: "en", strength: 2 })
-		.lean()
-		.exec();
+		// Push email to contacts.emailAdress array
+		newUser.contacts.emailAdress.push(email);
 
-	if (emailDuplicate) {
-		return res.status(409).json({
-			message: "Conflit Email has been taken, login if you have an account",
-		});
-	}
+		// Save user to database
+		const savedUser = await newUser.save();
 
-	// Hash password
-	const hashedPwd = await bcrypt.hash(password, 10); // salt rounds
-
-	const userObject = {
-		username,
-		firstname,
-		lastname,
-		email,
-		password: hashedPwd,
-	};
-
-	// Create and store new user
-	const user = await User.create(userObject);
-
-	if (user) {
-		//created
-		const { password, ...others } = user._doc;
-		res.status(201).json({ others });
-	} else {
-		res.status(400).json({ message: "Invalid user data received" });
+		if (savedUser) {
+			// Strip password from response
+			const { password, ...userWithoutPassword } = savedUser._doc;
+			return res.status(201).json(userWithoutPassword);
+		} else {
+			return res
+				.status(400)
+				.json({ message: "Failed to create user. Please try again later." });
+		}
+	} catch (error) {
+		console.error("Error creating user:", error);
+		return res.status(500).json({ message: "Server Error" });
 	}
 };
 
