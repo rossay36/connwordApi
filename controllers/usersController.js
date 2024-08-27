@@ -31,6 +31,14 @@ const updateProfilePicture = async (req, res) => {
 
 		// Update profile picture
 		user.profilePicture = image;
+		// Add new media to the media array
+		const imageType = image.endsWith(".mp4") ? "video/mp4" : "image/jpeg"; // Adjust as needed
+		user.media.push({
+			url: image,
+			type: imageType,
+			description: "Profile picture update",
+		});
+
 		await user.save();
 
 		// Create a new post for profile picture update
@@ -63,6 +71,13 @@ const updateCoverPicture = async (req, res) => {
 
 		// Update cover picture
 		user.coverPicture = image;
+		// Add new media to the media array
+		const imageType = image.endsWith(".mp4") ? "video/mp4" : "image/jpeg"; // Adjust as needed
+		user.media.push({
+			url: image,
+			type: imageType,
+			description: "Cover picture update",
+		});
 		await user.save();
 
 		// Create a new post for cover picture update

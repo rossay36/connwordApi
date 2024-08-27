@@ -51,10 +51,23 @@ const userSchema = new Schema(
 			type: String,
 			default: "",
 		},
+		media: [
+			{
+				url: { type: String, required: true },
+				type: { type: String, required: true },
+				description: { type: String, default: "" },
+				uploadedAt: { type: Date, default: Date.now },
+			},
+		],
 		bio: {
 			type: String,
 			default: "",
 			maxlength: 160,
+		},
+		userDesc: {
+			type: String,
+			default: "",
+			maxlength: 300,
 		},
 		gender: {
 			type: String,

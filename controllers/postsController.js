@@ -37,8 +37,26 @@ const createNewPost = async (req, res, next) => {
 			return res.status(400).json({ message: "All fields are required" });
 		}
 
-		// Save to MongoDB (assuming using Mongoose)
+		// Determine media types
+		const mediaDetails = image.map((url) => ({
+			url,
+			type: url.endsWith(".mp4")
+				? "video/mp4"
+				: url.endsWith(".pdf")
+				? "application/pdf"
+				: "image/jpeg", // Adjust as needed
+			description: "Post media",
+		}));
+
+		// Save to MongoDB
 		const newPost = await Post.create({ user, text, image });
+
+		// Update user's media array
+		const userToUpdate = await User.findById(user);
+		if (userToUpdate) {
+			userToUpdate.media.push(...mediaDetails);
+			await userToUpdate.save();
+		}
 
 		await User.findByIdAndUpdate(user, { $push: { posts: newPost._id } });
 
