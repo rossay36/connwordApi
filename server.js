@@ -31,6 +31,9 @@ app.use(express.json());
 
 app.use(cookieParser());
 
+// Serve static files from the "dist" directory
+app.use(express.static(path.join(__dirname, "dist")));
+
 app.use("/", express.static(path.join(__dirname, "public")));
 
 app.use("/", require("./routes/root"));
@@ -40,7 +43,13 @@ app.use("/posts", require("./routes/postRoutes"));
 app.use("/comments", require("./routes/commentRoutes"));
 app.use("/messages", require("./routes/messageRoutes"));
 
-app.all("*", (req, res) => {
+// Serve the index.html file for all other frontend routes
+app.get("*", (req, res) => {
+	res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+
+// Handle 404 errors for API routes or other routes not handled above
+app.use((req, res, next) => {
 	res.status(404);
 	if (req.accepts("html")) {
 		res.sendFile(path.join(__dirname, "views", "404.html"));
@@ -50,7 +59,6 @@ app.all("*", (req, res) => {
 		res.type("txt").send("404 Not Found");
 	}
 });
-
 app.use(errorHandler);
 
 mongoose.connection.once("open", () => {
